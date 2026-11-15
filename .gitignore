@@ -20,6 +20,7 @@ dist/
 # OpenML dataset cache
 data/*
 !data/.gitkeep
+!data/Rice_Cammeo_Osmancik.arff
 
 # Experiment results (scripts/run_experiment.py)
 results/*

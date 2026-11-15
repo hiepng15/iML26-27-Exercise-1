@@ -11,10 +11,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
+from scipy.io import arff
 from sklearn.datasets import fetch_openml
 
 # OpenML downloads are cached here, relative to the current working directory.
 DATA_HOME = Path("data")
+RICE_PATH = DATA_HOME / "Rice_Cammeo_Osmancik.arff"
 
 
 @dataclass(frozen=True)
@@ -33,6 +35,14 @@ class Dataset:
     @property
     def feature_names(self) -> list[str]:
         return list(self.X.columns)
+
+
+def load_rice(path: str | Path = RICE_PATH) -> Dataset:
+    """Read the local UCI Rice dataset without preprocessing the measurements."""
+    records, _ = arff.loadarff(path)
+    frame = pd.DataFrame(records)
+    target = frame.pop("Class").str.decode("utf-8")
+    return Dataset(name="rice", X=frame, y=target)
 
 
 # Columns that leak the target (boat = lifeboat, body = body identification number) or are

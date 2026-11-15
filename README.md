@@ -1,98 +1,41 @@
-# iML 26/27 – Exercise 1: Quantifying Interpretability
+# Exercise 1: Quantifying Interpretability
 
-Template repository for the bonus task. **Fork this repository**, replace the example with your own
-work, and add the PDF of your presentation. **You are expected to rewrite this README as well**: by
-the deadline it should describe your approach, how to reproduce your results, and contain your own
-[AI statement](#ai-statement).
+## Research question
 
-> **Deadline: Sunday, November 15th, 2026, 23:59.** Your code and presentation must be submitted by then.
+On the Rice dataset, does counting repeated feature uses as half a point change which tree model offers the best balance between predictive accuracy and reading cost?
 
-## Tasks
+## Data and models
 
-### Task 1 (1  point): An interpretability metric
+I used the [UCI Rice dataset](https://archive.ics.uci.edu/dataset/545/rice%C2%B1cammeo%C2%B1and%C2%B1osmancik) to classify Cammeo and Osmancik grains. The file is stored at `data/Rice_Cammeo_Osmancik.arff`.
 
-Develop a metric that quantifies model interpretability. It has to work within one model class,
-e.g. for decision trees, random forests and gradient-boosted trees. Then evaluate a few
-inherently interpretable models and/or datasets and investigate the *threshold of
-interpretability*: at what point does a model stop being interpretable?
+I tested single decision trees with maximum depths of 2, 4 and 6. Random forests and gradient boosting used 2, 3, 5 or 10 trees, each with a maximum depth of 2. All models used the same five stratified folds.
 
-- A trivial idea would be the *number of features used*. Your metric should go beyond that.
-- We will check that you did not simply copy someone else's interpretability metric.
-- You may use an LLM-based metric. In that case you have to provide evidence that its scores
-  agree with human judgments.
+## Cost
 
-### Task 2 (2 bonus points): Meta-features and interpretability
+`Cost = d - 0.5 × (d - u)`, where `d` is the number of split nodes visited and `u` is the number of distinct features on that path. The first use of a feature costs 1 point and each repeat costs 0.5. For an ensemble, I add the costs of its trees.
 
-Find connections between a dataset's meta-features (e.g. number of samples, number of features,
-class balance, …) and the interpretability, measured with your metric from Task 1, of several
-inherently interpretable models. This repository has no code for Task 2. Structure it as you see fit.
+## Results
 
-### Presentation
+| Model | Mean balanced accuracy (%) | SD (percentage points) | Cost at 90% coverage |
+|---|---:|---:|---:|
+| Decision Tree, depth 2 | 92.27 | 0.59 | 2 |
+| Decision Tree, depth 4 | 91.80 | 0.87 | 3 |
+| Decision Tree, depth 6 | 91.33 | 1.21 | 5 |
+| Random Forest, 2 trees | 91.90 | 0.58 | 3.5 |
+| Random Forest, 3 trees | 90.05 | 2.14 | 5.5 |
+| Random Forest, 5 trees | 91.83 | 0.75 | 9.5 |
+| Random Forest, 10 trees | 91.76 | 1.20 | 19 |
+| Gradient Boosting, 2 trees | 89.00 | 1.19 | 4 |
+| Gradient Boosting, 3 trees | 90.61 | 1.46 | 5.5 |
+| Gradient Boosting, 5 trees | 92.22 | 0.58 | 9.5 |
+| Gradient Boosting, 10 trees | 92.18 | 0.42 | 18 |
 
-Prepare a **5-minute presentation** of your metric and results across models and datasets (and, if
-applicable, your Task 2 findings). Commit it as [`presentation/presentation.pdf`](presentation/).
+For each configuration, see `path_cost_p90` and `path_cost_within_*_pct` in `results/scores.csv` for the 90% cost and coverage at each tested budget.
 
-## Setup
+## Conclusion
 
-The repository is an installable Python package. We recommend [uv](https://docs.astral.sh/uv/):
+Discounting repeated features lowered the cost of some models. The depth-2 decision tree still had the highest mean balanced accuracy (92.27%) and the lowest cost under both scoring methods (2 points). Five-tree gradient boosting scored slightly higher than the depth-4 tree (92.22% vs. 91.80%), with a higher reading cost (9.5 vs. 3 points).
 
-```bash
-uv sync --extra dev
-uv run pytest
-uv run python scripts/run_experiment.py
-```
+## AI use
 
-With plain pip:
-
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-```
-
-The first run downloads the Titanic dataset from OpenML and caches it in `data/` (relative to the
-directory you run from). You may use that dataset, but dont you want to rather look at something existing?
-
-## Repository structure
-
-```
-iml_interpretability/
-├── data.py        # Dataset container + load_titanic(); add your own datasets here
-├── models.py      # get_models(): the models you compare (example: one decision tree)
-├── metric.py      # InterpretabilityMetric base class + RelativeNumberOfLeaves (example)
-└── evaluate.py    # evaluate(): fits all models on all datasets and computes all metrics
-scripts/
-└── run_experiment.py   # runs evaluate() and writes results/scores.csv
-tests/                  # pytest tests
-presentation/           # put presentation.pdf here
-```
-
-The repository runs end to end on a minimal example: a single scikit-learn decision tree on
-Titanic, scored by its number of leaves relative to the maximum possible for its depth (`RelativeNumberOfLeaves` in
-[`iml_interpretability/metric.py`](iml_interpretability/metric.py)). Replace this example with your
-own metric, models and datasets. You are free to restructure everything, as long as the package
-stays installable and your results stay reproducible from the scripts in this repository.
-
-## Code style
-
-Please keep your code clean and consistent. We recommend [ruff](https://docs.astral.sh/ruff/) as
-linter and formatter. A configuration is already included in `pyproject.toml`:
-
-## Submission
-
-- Submit your code and presentation by **Sunday, November 15th, 2026, 23:59**.
-- Your fork contains your code, the scripts that reproduce your results, and
-  `presentation/presentation.pdf`.
-- **Rewrite this README.** Replace the template text with a short description of your approach and
-  how to reproduce your results.
-- **Mandatory:** replace the [AI statement](#ai-statement) below with your own, stating how you
-  used AI tools (or that you did not use any).
-
-## AI statement
-
-> **Mandatory.** Replace this example with your own: which AI tools you used, for what, and how you
-> checked their output (or that you used none).
-
-*Example:* I created this repository with Claude Code (Claude Opus 5.5). After clarifying the scope
-with it, it generated the code, tests and README based on my own projects as style references. I
-reviewed and edited the result and checked that it runs. I take full responsibility for and
-ownership of the content of this repository.
+I used ChatGPT to translate and explain the assignment, improve my English, and help write and test the experiment code.
